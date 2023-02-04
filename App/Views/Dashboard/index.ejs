@@ -19,11 +19,11 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Home</a>
+                <li class="nav-item m-2">
+                    <a class="btn btn btn-outline-dark" href="/">Home</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="">Dashboard</a>
+                <li class="nav-item m-2">
+                    <button class="btn btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#newEventModal">New Event</button>
                 </li>
             </ul>
             <div class="btn-group dropstart">
@@ -40,9 +40,128 @@
     </div>
 </nav>
 <div class="container">
-    <div class="row">
-        <h1>Welcome to Dashboard</h1>
+    <!-- Add New Modal -->
+    <div class="modal fade" id="newEventModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark-subtle">
+                    <h1 class="modal-title fs-5" id="staticBackdropLabel">New Event</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" id="newEventForm" action="/dashboard/event/create">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="eventTitle" class="form-label">Event Name</label>
+                            <input name="title" class="form-control" id="eventTitle" aria-describedby="titleHelp" required="required">
+                            <div id="titleHelp" class="form-text">Put a name for the event.</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="row d-flex align-items-center">
+                                <div class="col-md-9">
+                                    <label for="eventToken" class="form-label">Key</label>
+                                    <input name="token" class="form-control" id="eventToken" aria-describedby="tokenHelp" required="required">
+                                    <div id="tokenHelp" class="form-text">Pest or generate a unique key for the event.</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-outline-dark float-end mt-2" id="generateBtn">Generate</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventComment" class="form-label">Comment</label>
+                            <textarea name="comment" class="form-control" id="eventComment" rows="3" aria-describedby="commentHelp" required></textarea>
+                            <div id="commentHelp" class="form-text">Write something about the event.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success" disabled="disabled" id="addEventBtn">ADD</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="/dashboard/event/delete">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="deleteModalTitle">Are you sure?</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete <span class="fw-bolder" id="deleteEventName"></span> event?</p>
+                        <input type="hidden" name="id" id="deleteEventId">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <% if(data.length > 0){ %>
+        <table class="table mt-5">
+        <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Event Name</th>
+            <th scope="col">Token</th>
+            <th scope="col">Creation Date</th>
+            <th scope="col">Comment</th>
+            <th scope="col">Actions</th>
+        </tr>
+        </thead>
+        <tbody class="table-group-divider">
+        <% data.reverse().forEach((event, index) =>{ %>
+            <tr>
+                <th scope="row"><%= index + 1 %></th>
+                <td><%= event.title %></td>
+                <td><%= event.token %></td>
+                <td><%= moment.unix(event.date_created).format("MM-DD-YYYY h:m A") %></td>
+                <td><%= event.comment %></td>
+                <td>
+                    <button type="button" class="btn btn-outline-danger btn-sm delete-event" data-bs-toggle="modal" data-bs-target="#deleteModal" event-data="<%= JSON.stringify(event) %>">Delete</button>
+                </td>
+            </tr>
+        <% }); %>
+        </tbody>
+    </table>
+    <% } else { %>
+        <div class="alert alert-info mt-5 alert-dismissible fade show" role="alert">
+            You don't have any events yet.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
 </div>
+<script>
+    $(document).ready(function () {
+        $('#generateBtn').click(function () {
+            // Generate a random string
+            let possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            let text = "";
+            for (let i = 0; i < 32 ; i++) {
+                text += possible.charAt(Math.floor(Math.random() * possible.length));
+            }
+            $('#eventToken').val(text);
+        });
+        $('#newEventForm').keyup(function (){
+            let title = $('#eventTitle').val();
+            let key = $('#eventToken').val();
+            let comment = $('#eventComment').val();
+            if (title.length > 0 && key.length > 0 && comment.length > 0) {
+                $('#addEventBtn').removeAttr('disabled');
+            } else {
+                $('#addEventBtn').attr('disabled', 'disabled');
+            }
+        });
+        $('.delete-event').click(function (){
+            let event = JSON.parse($(this).attr('event-data'));
+            $('#deleteEventName').text(event.title);
+            $('#deleteEventId').val(event.id);
+        });
+    });
+</script>
 </body>
 </html>
