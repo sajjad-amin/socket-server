@@ -27,5 +27,9 @@ class EventController {
             res.redirect('/dashboard');
         });
     }
+
+    static matchEvent(config) {
+        return EventModel.getOne('events', [`title='${config.event_name}'`,`token = '${config.event_token}'`])
+    }
 }
 module.exports = EventController;

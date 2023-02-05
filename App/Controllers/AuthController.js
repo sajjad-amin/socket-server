@@ -30,7 +30,11 @@ class AuthController {
     }
 
     static register(req, res) {
-        res.render('Auth/register', { errors:null } );
+        if(process.env.REGISTER_ENABLED === "true"){
+            res.render('Auth/register', { errors:null } );
+        }else{
+            res.redirect('/auth/login');
+        }
     }
 
     static registerPost(req, res) {

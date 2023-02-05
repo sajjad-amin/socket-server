@@ -6,6 +6,7 @@ class DashboardController {
     res.render('Dashboard/index', {
         user: user,
         data: await EventModel.getEventsByUserId(user.id),
+        socketUrl: req.protocol + '://' + req.get('host'),
         moment: moment
     });
   }

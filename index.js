@@ -10,6 +10,7 @@ const port = process.env.PORT || 20232;
 const HomeRouter = require('./App/Routes/HomeRouter');
 const AuthRouter = require('./App/Routes/AuthRouter');
 const DashboardRouter = require('./App/Routes/DashboardRoute');
+const EventController = require('./App/Controllers/EventController');
 let server = null;
 
 if(process.env.SSL_ENABLED === "true"){
@@ -28,19 +29,33 @@ const io = new Server(server,{
     }
 });
 
-app.use(cors());
+io.on('connection', (socket) => {
+    let clientEventName = '';
+    socket.on('socket_client_config', async (config) => {
+        let event = await EventController.matchEvent(config) || {};
+        if(Object.keys(event).length > 0){
+            clientEventName = config.event_name;
+            socket.on(config.event_name, (msg) => {
+                io.emit(config.event_name, msg);
+            });
+        }
+    });
+    io.on('disconnect', () => {
+        socket.removeAllListeners('socket_client_config');
+        if(clientEventName !== ''){
+            socket.removeAllListeners(clientEventName);
+        }
+    });
+});
+
 app.set('view engine', 'ejs');
 app.set('views', './App/Views');
+app.set('socketIO', io);
 
+app.use(cors());
 app.use('/', HomeRouter);
 app.use('/auth', AuthRouter);
 app.use('/dashboard', DashboardRouter);
-
-io.on('connection', (socket) => {
-    socket.on('saws', (msg) => {
-        io.emit('saws', msg);
-    });
-});
 
 server.listen(port, () => {
     console.log('listening on port ' + port);

@@ -41,11 +41,11 @@
 </nav>
 <div class="container">
     <!-- Add New Modal -->
-    <div class="modal fade" id="newEventModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal fade" id="newEventModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="newEventModalTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-dark-subtle">
-                    <h1 class="modal-title fs-5" id="staticBackdropLabel">New Event</h1>
+                <div class="modal-header bg-dark-subtle bg-gradient">
+                    <h1 class="modal-title fs-5" id="newEventModalTitle">New Event</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="POST" id="newEventForm" action="/dashboard/event/create">
@@ -74,7 +74,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-success" disabled="disabled" id="addEventBtn">ADD</button>
+                        <button type="submit" class="btn btn-outline-success" disabled="disabled" id="addEventBtn">ADD</button>
                     </div>
                 </form>
             </div>
@@ -101,6 +101,40 @@
             </div>
         </div>
     </div>
+    <!-- View Code Modal -->
+    <div class="modal fade" id="viewCodeModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="viewCodeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-dark-subtle bg-gradient">
+                    <h1 class="modal-title fs-5" id="viewCodeModalLabel">Socket IO initialization</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <code>
+                        <span class="text-muted">// add script tag to your html</span><br>
+                        &lt;script src="<%= socketUrl %>/socket.io/socket.io.min.js"&gt;&lt;/script&gt;<br>
+                        <span class="text-muted">// initialize socket.io</span><br>
+                        const socket = io('<%= socketUrl %>');
+                        socket.on('connect', function () {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;socket.emit('socket_client_config', {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event_name: '<span class="codeEventName"></span>',<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event_token: '<span class="codeEventToken"></span>'<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;});<br>
+                        });<br>
+                        <span class="text-muted">// emit your event here</span><br>
+                        socket.emit('<span class="codeEventName"></span>', 'your data here');<br>
+                        <span class="text-muted">// listen to your event here</span><br>
+                        socket.on('<span class="codeEventName"></span>', function (data) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-muted">// Do something with your data</span><br>
+                        });<br>
+                    </code>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <% if(data.length > 0){ %>
         <table class="table mt-5">
         <thead>
@@ -110,7 +144,7 @@
             <th scope="col">Token</th>
             <th scope="col">Creation Date</th>
             <th scope="col">Comment</th>
-            <th scope="col">Actions</th>
+            <th scope="col" class="text-center">Actions</th>
         </tr>
         </thead>
         <tbody class="table-group-divider">
@@ -121,7 +155,8 @@
                 <td><%= event.token %></td>
                 <td><%= moment.unix(event.date_created).format("MM-DD-YYYY h:m A") %></td>
                 <td><%= event.comment %></td>
-                <td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-outline-primary btn-sm me-2 view-code" data-bs-toggle="modal" data-bs-target="#viewCodeModal" event-data="<%= JSON.stringify(event) %>">View Code</button>
                     <button type="button" class="btn btn-outline-danger btn-sm delete-event" data-bs-toggle="modal" data-bs-target="#deleteModal" event-data="<%= JSON.stringify(event) %>">Delete</button>
                 </td>
             </tr>
@@ -160,6 +195,11 @@
             let event = JSON.parse($(this).attr('event-data'));
             $('#deleteEventName').text(event.title);
             $('#deleteEventId').val(event.id);
+        });
+        $('.view-code').click(function (){
+            let event = JSON.parse($(this).attr('event-data'));
+            $('.codeEventName').text(event.title);
+            $('.codeEventToken').text(event.token);
         });
     });
 </script>
