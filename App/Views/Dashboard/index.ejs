@@ -191,6 +191,9 @@
                 $('#addEventBtn').attr('disabled', 'disabled');
             }
         });
+        $('#addEventBtn').click(function (){
+            $('#eventToken').removeAttr('disabled');
+        });
         $('.delete-event').click(function (){
             let event = JSON.parse($(this).attr('event-data'));
             $('#deleteEventName').text(event.title);
