@@ -114,7 +114,7 @@
                         <span class="text-muted">// add script tag to your html</span><br>
                         &lt;script src="<%= socketUrl %>/socket.io/socket.io.min.js"&gt;&lt;/script&gt;<br>
                         <span class="text-muted">// initialize socket.io</span><br>
-                        const socket = io('<%= socketUrl %>');
+                        const socket = io('<%= socketUrl %>');<br>
                         socket.on('connect', function () {<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;socket.emit('socket_client_config', {<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event_name: '<span class="codeEventName"></span>',<br>
