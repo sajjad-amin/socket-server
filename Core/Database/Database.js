@@ -2,7 +2,7 @@ class Database {
     constructor(){
         const sqlite = require('sqlite3').verbose();
         const path = require('path');
-        const dbPath = path.resolve(__dirname, '../../App/Database/Database.db');
+        const dbPath = path.resolve(__dirname, '../../App/Database/database.db');
         this.connection = new sqlite.Database(dbPath, (err) => {
             if(err){
                 console.log(err);
