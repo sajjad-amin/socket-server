@@ -1,7 +1,8 @@
-const userModel = require('../Models/UserModel');
 const {validateName, validateEmail} = require('../../Core/Factory/Validation');
-const {generateMD5, createToken, readToken, compareMD5} = require('../../Core/Factory/Hash');
-const UserModel = require("../Models/UserModel");
+const {generateMD5, createToken, readToken, compareMD5, randomString} = require('../../Core/Factory/Hash');
+const nodeMailer = require('nodemailer');
+const userModel = require('../Models/UserModel');
+const forgotModel = require("../Models/ForgotModel");
 class AuthController {
     static login(req, res) {
         res.render('Auth/login', { errors:null });
@@ -63,11 +64,78 @@ class AuthController {
         });
     }
 
+    static forgot(req, res) {
+        res.render('Auth/forgot', { errors:null, message:null });
+    }
+
+    static async forgotPost(req, res) {
+        const transporter = nodeMailer.createTransport({
+            host: process.env.MAIL_HOST,
+            port: process.env.MAIL_PORT,
+            auth: {
+                user: process.env.MAIL_USER,
+                pass: process.env.MAIL_PASS
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
+        });
+        const email = req.body.email;
+        const password = req.body.password;
+        const token = randomString(32);
+        const base_url = req.protocol + '://' + req.get('host');
+        const data = {
+            email: email,
+            password: generateMD5(password),
+        };
+        const expires = Math.floor(Date.now() / 1000) + 3600;
+        userModel.getUserByEmail(email).then((user) => {
+            // url
+            if(user) {
+                forgotModel.getForgotToken(email).then((existingToken) => {
+                    if(existingToken) {
+                        forgotModel.deleteForgotToken(email);
+                        forgotModel.insertForgotToken(email, token, JSON.stringify(data), expires);
+                    }else{
+                        forgotModel.insertForgotToken(email, token, JSON.stringify(data), expires);
+                    }
+                });
+                const mailOptions = {
+                    from: process.env.MAIL_FROM,
+                    to: email,
+                    subject: 'SocketIO server password reset',
+                    html: `<p>Click <a href="${base_url}/auth/reset-password/${token}.${btoa(email)}">here</a> to reset your SocketIO server account password</p>`
+                };
+                transporter.sendMail(mailOptions);
+                res.render('Auth/forgot', {errors: null, message: 'An email has been sent to your email address. Please check your email to reset your password'});
+            }else{
+                res.render('Auth/forgot', {errors: ['Email not found'], message: null});
+            }
+        });
+    }
+
+    static resetPassword(req, res) {
+        const ext = req.params.ext;
+        const token = ext.split('.')[0];
+        const email = atob(ext.split('.')[1]);
+        forgotModel.getForgotToken(email).then((forgot) => {
+            if(forgot && forgot.token === token && forgot.expires > Math.floor(Date.now() / 1000)) {
+                const data = JSON.parse(forgot.data);
+                forgotModel.updatePassword(data.email, data.password).then(() => {
+                    forgotModel.deleteForgotToken(email);
+                    res.render('Auth/reset-password', {errors: null, message: 'Password has been reset successfully'});
+                });
+            }else{
+                res.render('Auth/reset-password', {errors: ['Link is invalid or expired'], message: null});
+            }
+        });
+    }
+
     static logout(req, res) {
         const token = req.cookies.auth_token;
         if(token) {
             const auth_token = readToken(req.cookies.auth_token);
-            UserModel.getUserTokens(auth_token.user.id).then((tokens) => {
+            userModel.getUserTokens(auth_token.user.id).then((tokens) => {
                 let activeToken = tokens.filter((token) => {
                     return token.date_expired > Math.floor(Date.now() / 1000) && token.token === req.cookies.auth_token && compareMD5(token.key, auth_token.signature);
                 })[0];

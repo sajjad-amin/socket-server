@@ -10,6 +10,9 @@ AuthRouter.get('/login', AuthController.login);
 AuthRouter.post('/login', AuthController.loginPost);
 AuthRouter.get('/register', AuthController.register);
 AuthRouter.post('/register', AuthController.registerPost);
+AuthRouter.get('/forgot-password', AuthController.forgot);
+AuthRouter.post('/forgot-password', AuthController.forgotPost);
+AuthRouter.get('/reset-password/:ext', AuthController.resetPassword);
 AuthRouter.get('/logout', AuthController.logout);
 
 module.exports = AuthRouter;
