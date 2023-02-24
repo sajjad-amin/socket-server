@@ -158,7 +158,6 @@ class AuthController {
     }
 
     static logout(req, res) {
-        console.log('logout');
         const token = req.cookies.auth_token;
         if(token) {
             const auth_token = readToken(req.cookies.auth_token);

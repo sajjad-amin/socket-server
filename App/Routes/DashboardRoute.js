@@ -15,5 +15,6 @@ DashboardRouter.use(VerifiedUserMiddleware);
 DashboardRouter.get('/', DashboardController.index);
 DashboardRouter.post('/event/create', EventController.createEvent);
 DashboardRouter.post('/event/delete', EventController.deleteEvent);
+DashboardRouter.post('/event/is-exist', EventController.isEventExist);
 
 module.exports = DashboardRouter;

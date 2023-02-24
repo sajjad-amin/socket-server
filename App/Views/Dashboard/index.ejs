@@ -50,6 +50,7 @@
                 </div>
                 <form method="POST" id="newEventForm" action="/dashboard/event/create">
                     <div class="modal-body">
+                        <div class="alert alert-danger d-none" id="newEventAlert">The event name is already taken.<br>Please try another name.</div>
                         <div class="mb-3">
                             <label for="eventTitle" class="form-label">Event Name</label>
                             <input name="title" class="form-control" id="eventTitle" aria-describedby="titleHelp" required="required">
@@ -181,10 +182,32 @@
             }
             $('#eventToken').val(text);
         });
-        $('#newEventForm').keyup(function (){
+        $('#newEventForm').keyup(function (e){
             let title = $('#eventTitle').val();
             let key = $('#eventToken').val();
             let comment = $('#eventComment').val();
+            if(e.target.name === 'title'){
+                $.ajax({
+                    url: '/dashboard/event/is-exist',
+                    type: 'POST',
+                    data: {
+                        title: title
+                    },
+                    success: function (data) {
+                        if(data.status){
+                            $('#newEventAlert').removeClass('d-none');
+                            $('#addEventBtn').attr('disabled', 'disabled');
+                        } else {
+                            $('#newEventAlert').addClass('d-none');
+                            if (title.length > 0 && key.length > 0 && comment.length > 0) {
+                                $('#addEventBtn').removeAttr('disabled');
+                            } else {
+                                $('#addEventBtn').attr('disabled', 'disabled');
+                            }
+                        }
+                    }
+                });
+            }
             if (title.length > 0 && key.length > 0 && comment.length > 0) {
                 $('#addEventBtn').removeAttr('disabled');
             } else {
