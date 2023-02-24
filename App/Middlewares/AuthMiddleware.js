@@ -7,7 +7,6 @@ const AuthMiddleware = (req, res, next) => {
         res.redirect('/auth/login');
     }else{
         const auth_token = readToken(req.cookies.auth_token);
-
         UserModel.getUserTokens(auth_token.user.id).then((tokens) => {
            let activeToken = tokens.filter((token) => {
                return token.date_expired > Math.floor(Date.now() / 1000) && token.token === req.cookies.auth_token && compareMD5(token.key, auth_token.signature);

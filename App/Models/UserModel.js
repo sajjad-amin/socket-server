@@ -33,6 +33,12 @@ class UserModel extends Model {
         return this.update('users', data, [`id = '${id}'`]);
     }
 
+    static deleteUser(id){
+        this.delete('events', [`user_id = '${id}'`]);
+        this.delete('auth_token', [`user_id = '${id}'`]);
+        this.delete('users', [`id = '${id}'`]);
+    }
+
     static insertToken(user_id, key, token, date_created, date_expired){
         return this.insert('auth_token',{user_id, key, token, date_created, date_expired});
     }
