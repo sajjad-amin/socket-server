@@ -16,53 +16,34 @@
         <div class="col-md-4 mt-5">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title">Forgot Password</h5>
+                    <h5 class="card-title">Verify Account</h5>
                 </div>
                 <div class="card-body">
                     <% if(errors){ %>
                         <div class="alert alert-danger" role="alert">
                             <ul>
-                                <% errors.forEach(function(error){ %>
+                                <% errors.forEach(function(error){%>
                                     <li><%= error %></li>
                                 <% }); %>
                             </ul>
                         </div>
+                        <form action="/auth/verify" method="POST">
+                            <input type="hidden" name="id" value="<%= user_id %>">
+                            <button type="submit" class="btn btn-primary">Resend Email</button>
+                        </form>
                     <% } %>
                     <% if(message){ %>
                         <div class="alert alert-info" role="alert">
                             <%= message %>
                         </div>
+                        <a class="text-muted" href="/auth/login">
+                            Go to Login
+                        </a>
                     <% } %>
-                    <form method="POST">
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input name="email" type="email" class="form-control" id="email">
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">New Password</label>
-                            <input name="password" type="password" class="form-control" id="password" autocomplete="off">
-                        </div>
-                        <button type="submit" id="submit" class="btn btn-primary float-end">Submit</button>
-                    </form>
-                    <br><br>
-                    <a class="text-muted" href="/auth/login">← Back</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<script>
-    $(document).ready(function () {
-        $('form').keyup(function (e) {
-            let email = $('#email').val();
-            let password = $('#password').val();
-            if (email !== '' && password !== '') {
-                $('#submit').prop('disabled', false);
-            } else {
-                $('#submit').prop('disabled', true);
-            }
-        });
-    });
-</script>
 </body>
 </html>

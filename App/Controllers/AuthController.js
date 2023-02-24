@@ -1,5 +1,6 @@
 const {validateName, validateEmail} = require('../../Core/Factory/Validation');
 const {generateMD5, createToken, readToken, compareMD5, randomString} = require('../../Core/Factory/Hash');
+const Email = require('../../Core/Factory/Email');
 const nodeMailer = require('nodemailer');
 const userModel = require('../Models/UserModel');
 const forgotModel = require("../Models/ForgotModel");
@@ -31,7 +32,7 @@ class AuthController {
     }
 
     static register(req, res) {
-        if(process.env.REGISTER_ENABLED === "true"){
+        if(process.env.REGISTER_ENABLED === "true" || process.env.PRODUCTION === "false") {
             res.render('Auth/register', { errors:null } );
         }else{
             res.redirect('/auth/login');
@@ -57,9 +58,48 @@ class AuthController {
             if(errors.length > 0) {
                 res.render('Auth/register', {errors});
             }else{
-                userModel.insertUser(name, email, generateMD5(password)).then(() => {
+                const verify_token = randomString(32);
+                userModel.insertUser(name, email, generateMD5(password),verify_token).then(() => {
+                    const mail = new Email();
+                    const subject = 'Verify your SocketIO account';
+                    const url = req.protocol + '://' + req.get('host');
+                    const message = `Hi ${name},<br><br>Thank you for registering with SocketIO. Please click the link below to verify your account.<br><br><a href="${url}/auth/verify-account/${verify_token}.${btoa(email)}">Verify Account</a><br><br>Regards,<br>SocketIO Team`;
+                    mail.send(email, subject, message, true);
                     res.redirect('/auth/login');
                 });
+            }
+        });
+    }
+
+    static verify(req, res) {
+        const user_id = readToken(req.cookies.auth_token).user.id;
+        res.render('Auth/verify', {errors: ['An email has been sent to your email address. Please check your email to verify your account.'], message: null, user_id: user_id});
+    }
+
+    static async verifyAccount(req, res) {
+        const token = req.params.ext;
+        const [verify_token, email] = token.split('.');
+        const user = await userModel.getUserByEmail(atob(email));
+        if(user && user.verified === verify_token) {
+            await userModel.updateUser(user.id, {verified: 1});
+            res.render('Auth/verify', {errors: null, message: 'Your account has been verified. You can login now.', user_id: user.id});
+        }else{
+            res.render('Auth/verify', {errors: ['Invalid token'], message: null, user_id: user.id});
+        }
+    }
+
+    static resendVerifyEmail(req, res) {
+    const id = req.body.id;
+        userModel.getUserById(id).then((user) => {
+            if(user) {
+                const mail = new Email();
+                const subject = 'Verify your SocketIO account';
+                const url = req.protocol + '://' + req.get('host');
+                const message = `Hi ${user.name},<br><br>Thank you for registering with SocketIO. Please click the link below to verify your account.<br><br><a href="${url}/auth/verify-account/${user.verified}.${btoa(user.email)}">Verify Account</a><br><br>Regards,<br>SocketIO Team`;
+                mail.send(user.email, subject, message, true);
+                res.render('Auth/verify', {errors: ['An email has been sent to your email address. Please check your email to verify your account.'], message: null, user_id: id});
+            }else{
+                res.render('Auth/verify', {errors: ['User does not exist'], message: null, user_id: id});
             }
         });
     }
@@ -69,17 +109,6 @@ class AuthController {
     }
 
     static async forgotPost(req, res) {
-        const transporter = nodeMailer.createTransport({
-            host: process.env.MAIL_HOST,
-            port: process.env.MAIL_PORT,
-            auth: {
-                user: process.env.MAIL_USER,
-                pass: process.env.MAIL_PASS
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        });
         const email = req.body.email;
         const password = req.body.password;
         const token = randomString(32);
@@ -100,13 +129,10 @@ class AuthController {
                         forgotModel.insertForgotToken(email, token, JSON.stringify(data), expires);
                     }
                 });
-                const mailOptions = {
-                    from: process.env.MAIL_FROM,
-                    to: email,
-                    subject: 'SocketIO server password reset',
-                    html: `<p>Click <a href="${base_url}/auth/reset-password/${token}.${btoa(email)}">here</a> to reset your SocketIO server account password</p>`
-                };
-                transporter.sendMail(mailOptions);
+                const mail = new Email();
+                const subject = 'SocketIO server password reset';
+                const html = `<p>Click <a href="${base_url}/auth/reset-password/${token}.${btoa(email)}">here</a> to reset your SocketIO server account password</p>`;
+                mail.send(email, subject, html, true);
                 res.render('Auth/forgot', {errors: null, message: 'An email has been sent to your email address. Please check your email to reset your password'});
             }else{
                 res.render('Auth/forgot', {errors: ['Email not found'], message: null});
@@ -132,6 +158,7 @@ class AuthController {
     }
 
     static logout(req, res) {
+        console.log('logout');
         const token = req.cookies.auth_token;
         if(token) {
             const auth_token = readToken(req.cookies.auth_token);

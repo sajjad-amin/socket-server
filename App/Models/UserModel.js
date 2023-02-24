@@ -25,8 +25,12 @@ class UserModel extends Model {
         return this.delete('auth_token', [`id = '${id}'`]);
     }
 
-    static insertUser(name, email, password){
-        return this.insert('users',{name, email, password});
+    static insertUser(name, email, password, verified = null){
+        return this.insert('users',{name, email, password, verified});
+    }
+
+    static updateUser(id, data){
+        return this.update('users', data, [`id = '${id}'`]);
     }
 
     static insertToken(user_id, key, token, date_created, date_expired){

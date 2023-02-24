@@ -20,7 +20,8 @@ function createToken(userObject, expires = null) {
     const user = {
         id: userObject.id,
         name: userObject.name,
-        email: userObject.email
+        email: userObject.email,
+        verified: userObject.verified
     }
     const created = Math.floor(Date.now() / 1000);
     const expired = expires ? created + expires : created + 3600;
