@@ -9,7 +9,7 @@ const { readFileSync } = require("fs");
 const port = process.env.PORT || 20232;
 const HomeRouter = require('./App/Routes/HomeRouter');
 const AuthRouter = require('./App/Routes/AuthRouter');
-const DashboardRouter = require('./App/Routes/DashboardRoute');
+const DashboardRouter = require('./App/Routes/DashboardRouter');
 const EventController = require('./App/Controllers/EventController');
 let server = null;
 

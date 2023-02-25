@@ -1,4 +1,4 @@
-const verifiedUserMiddleware = (req, res, next) => {
+const VerifiedUserMiddleware = (req, res, next) => {
     if(req.user.verified === '1') {
         next();
     }else{
@@ -6,4 +6,4 @@ const verifiedUserMiddleware = (req, res, next) => {
     }
 }
 
-module.exports = verifiedUserMiddleware;
+module.exports = VerifiedUserMiddleware;
